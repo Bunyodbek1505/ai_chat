@@ -1,4 +1,7 @@
-import { API_KEY, API_URL } from "../../global";
+import { useChatStore } from "@/store/chatStore";
+import { AI_API_URL, API_KEY, API_URL } from "../../global";
+import { serviceApi } from "../serviceApi";
+import { useUserStore } from "@/store/userStore";
 
 export type ChatMessagePayload = {
   model: string;
@@ -20,15 +23,16 @@ export async function streamChatMessage(
     responseTime: number;
   }) => void
 ): Promise<void> {
-  const url = API_URL + "/v1-openai/chat/completions";
+  const streamUrl = AI_API_URL + "/v1-openai/chat/completions";
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
     Authorization: `Bearer ${API_KEY}`,
   };
 
+  
   const startTime = performance.now();
 
-  const res = await fetch(url, {
+  const streamRequest = await fetch(streamUrl, {
     method: "POST",
     headers,
     body: JSON.stringify({
@@ -38,11 +42,26 @@ export async function streamChatMessage(
     }),
   });
 
-  if (!res.ok || !res.body) {
-    throw new Error("API yoki stream bilan muammo");
+  const userInput = payload.messages[payload.messages.length - 1];
+  const chatId = useChatStore.getState().activeChatId;
+
+  const localRequest = serviceApi("POST", "/message/send", {
+    model: payload.model,
+    // role: role,
+    content: userInput.content,
+    chatId,
+  }).catch((err) => {
+    console.warn("Mahalliy API xatolik:", err);
+  });
+
+  const res = await Promise.all([streamRequest, localRequest]);
+  const streamRes = res[0];
+
+  if (!streamRes.ok || !streamRes.body) {
+    throw new Error("Stream API bilan muammo");
   }
 
-  const reader = res.body.getReader();
+  const reader = streamRes.body.getReader();
   const decoder = new TextDecoder("utf-8");
   let buffer = "";
 
@@ -68,7 +87,7 @@ export async function streamChatMessage(
         if (content) {
           onChunk(content);
         }
-        // ✅ Meta ma’lumotlar yakuniy blokda bo‘ladi
+        // Meta ma’lumotlar yakuniy blokda bo‘ladi
         const usage = parsed.usage;
         if (usage && onComplete) {
           const endTime = performance.now();

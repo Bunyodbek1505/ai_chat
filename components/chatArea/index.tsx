@@ -1,11 +1,12 @@
 "use client";
-import { useLayoutEffect, useRef } from "react";
+import { useEffect, useLayoutEffect, useRef } from "react";
 import { useChatStore } from "@/store/chatStore";
 import { streamChatMessage } from "@/service/chat/streamChatMessage";
 import { useModelStore } from "@/store/modelStore";
 import StopResponding from "../stopResponding";
 import InputArea from "../inputArea";
 import MessageItem from "../messageItem";
+import { v4 as uuidv4 } from "uuid";
 
 export interface Message {
   id: string;
@@ -27,6 +28,15 @@ export default function ChatArea() {
   const { activeChatId, messages, setMessages, isStreaming, setStreaming } =
     useChatStore();
   const model = useModelStore((s) => s.model);
+  const { setIsSidebarOpen } = useChatStore();
+
+  const content = useModelStore((state) => state.content);
+  // console.log("Store'dan olingan content:", content);
+
+  useEffect(() => {
+    const isMobile = window.innerWidth < 1023;
+    setIsSidebarOpen(!isMobile);
+  }, []);
 
   const handleSend = (
     payload:
@@ -39,13 +49,13 @@ export default function ChatArea() {
           }[];
         }
   ) => {
-    const id = Date.now().toString();
+    const id = uuidv4();
     const newMessage = { id, question: "", answer: "", isLoading: true };
 
     let userMessage: any;
     if (typeof payload === "string") {
       newMessage.question = payload;
-      // old text-only behaviour
+
       userMessage = { role: "user", content: payload };
     } else if (typeof payload === "object" && Array.isArray(payload.content)) {
       newMessage.question = payload.content
@@ -53,7 +63,6 @@ export default function ChatArea() {
           c.type === "text" ? c.text : c.type === "image_url" ? "[Rasm]" : ""
         )
         .join(" ");
-      // OpenAI style multi-modal message
       userMessage = { role: "user", content: payload.content };
     }
 
@@ -77,13 +86,16 @@ export default function ChatArea() {
       return result;
     });
 
+    // Use dynamic system content from the store, with fallback
+    const systemContent = content || "You are a helpful assistant.";
+
     const fullMessages: {
       role: "system" | "user" | "assistant";
       content: any;
     }[] = [
-      { role: "system", content: "You are a helpful assistant." },
+      { role: "system", content: systemContent },
       ...contextMessages,
-      userMessage, 
+      userMessage,
     ];
 
     streamChatMessage(
@@ -104,12 +116,6 @@ export default function ChatArea() {
             setMessages((prev) =>
               prev.map((msg) => (msg.id === id ? { ...msg, reasoning } : msg))
             );
-
-            // <think> blokni tozalaymiz
-            // reasoningBuffer = reasoningBuffer.replace(
-            //   /<think>[\s\S]*?<\/think>/i,
-            //   ""
-            // );
           }
         }
 
@@ -177,7 +183,7 @@ export default function ChatArea() {
         )}
         <div className="w-full px-0 pb-6 flex justify-center ">
           <div className="w-full max-w-4xl md: p-2">
-            <InputArea onSend={handleSend} conversationId={activeChatId} />
+            <InputArea onSend={handleSend} />
           </div>
         </div>
       </div>

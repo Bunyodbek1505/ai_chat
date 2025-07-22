@@ -5,6 +5,7 @@ import Providers from "./provider";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { ThemeProvider } from "@/components/theme-provider";
+import { AuthProvider } from "@/service/auth/authProvider";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -18,11 +19,18 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
+
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body className={inter.className}>
-        <ThemeProvider>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="dark"
+          enableSystem
+          disableTransitionOnChange
+        >
           <Providers>
+            <AuthProvider />
             {children}
             <ToastContainer />
           </Providers>

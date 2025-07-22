@@ -1,4 +1,6 @@
+
 import { create } from "zustand";
+import { v4 as uuidv4 } from "uuid";
 
 import { Message } from "@/components/chatArea";
 
@@ -24,14 +26,12 @@ interface ChatStoreState {
   pinChat: (chatId: string) => void;
   unpinChat: (chatId: string) => void;
 }
-const isMobileTablet =
-  typeof window !== "undefined" ? window.innerWidth < 1023 : false;
 
 export const useChatStore = create<ChatStoreState>((set, get) => ({
   chatList: [],
   activeChatId: undefined,
   messages: [],
-  isSidebarOpen: !isMobileTablet,
+  isSidebarOpen: false,
   isStreaming: false,
   currentTaskId: null,
   pinnedChats: {},
@@ -69,10 +69,10 @@ export const useChatStore = create<ChatStoreState>((set, get) => ({
   },
 
   addNewChat: () => {
-    const newId = Date.now().toString();
+    const newId = uuidv4();
     set((state) => ({
       chatList: [{ id: newId, name: "New Chat" }, ...state.chatList],
-      activeChatId: newId,
+      // activeChatId: newId,
       messages: [],
     }));
   },

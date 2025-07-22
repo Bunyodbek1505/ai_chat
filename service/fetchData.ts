@@ -1,65 +1,43 @@
-import { API_URL, API_KEY } from "../global";
+import axios, { AxiosRequestConfig } from "axios";
+import { AI_API_URL, API_KEY } from "../global";
+import { toast } from "react-toastify";
 
-interface FetchOptions extends RequestInit {
-  endpoint: string;
-  headers?: Record<string, string>;
-  query?: Record<string, any>;
-}
+const API = axios.create({
+  baseURL: AI_API_URL,
+});
 
-/**
- * Universal API fetch function
- * @param options
- * @returns response data (json)
- */
-export async function apiFetch<T = any>(
-  options: FetchOptions
-): Promise<T | null> {
-  const {
-    endpoint,
-    method = "GET",
-    headers = {},
-    body,
-    query,
-    ...rest
-  } = options;
+export const fetchData = async <T>(
+  url: string,
+  method: "GET" | "POST" | "PUT" | "DELETE" = "GET",
+  data?: any,
+  options?: AxiosRequestConfig
+): Promise<T> => {
+  try {
+    const response = await API({
+      url,
+      method,
+      params: method === "GET" ? data : undefined,
+      data: method !== "GET" ? data : undefined,
+      headers: {
+        "Content-Type": "application/json",
+        ...(API_KEY ? { Authorization: `Bearer ${API_KEY}` } : {}),
+        ...options?.headers,
+      },
+      ...options,
+    });
 
-  // Query string
-  let url = API_URL + endpoint;
-  if (query && Object.keys(query).length) {
-    const q = new URLSearchParams(query).toString();
-    url += "?" + q;
-  }
-
-  // Default headers
-  const defaultHeaders: Record<string, string> = {
-    "Content-Type": "application/json",
-  };
-  if (API_KEY) {
-    defaultHeaders["Authorization"] = `Bearer ${API_KEY}`;
-  }
-
-  // Merge headers
-  const mergedHeaders = { ...defaultHeaders, ...headers };
-
-  const res = await fetch(url, {
-    method,
-    headers: mergedHeaders,
-    body: body ? JSON.stringify(body) : undefined,
-    ...rest,
-  });
-
-  if (res.status === 204) {
-    return null;
-  }
-
-  if (!res.ok) {
-    let errorText = "";
-    try {
-      errorText = await res.text();
-    } catch {
-      errorText = res.statusText;
+    if (response?.data?.message) {
+      toast.success(response.data.message);
     }
-    throw new Error(errorText || "API Error");
+
+    return response.data;
+  } catch (error: any) {
+    console.error("API Error:", error);
+
+    const errorMessage =
+      error.response?.data?.message || error.message || "Xatolik yuz berdi";
+    toast.error(errorMessage);
+
+    throw error;
   }
-  return res.json();
-}
+};

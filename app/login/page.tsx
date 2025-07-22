@@ -1,17 +1,77 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useLayoutEffect, useState } from "react";
 import { Input } from "@/components/ui/input";
 import fizmaSoftlogoDark from "@/public/logo1.svg";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Icon } from "@iconify/react/dist/iconify.js";
+import { getMe, loginUser } from "@/service/auth";
+import Cookies from "js-cookie";
+import { useRouter } from "next/navigation";
+import { useUserStore } from "@/store/userStore";
+import { toast } from "react-toastify";
 
 const Login = () => {
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+
   const [showPassword, setShowPassword] = useState(false);
+
+  const router = useRouter();
+
+  const token = Cookies.get("token");
+
+  useLayoutEffect(() => {
+    if (token) {
+      router.push("/");
+    }
+  }, []);
+
+  const handleLogin = async (
+    e: React.FormEvent<HTMLFormElement>,
+    username: string,
+    password: string
+  ) => {
+    e.preventDefault();
+    try {
+      const res = await loginUser({ username, password });
+      if (!res || !res.data?.token) {
+        throw new Error("Login failed: No token returned");
+      }
+      Cookies.set("token", res.data.token);
+
+      //  getMe orqali foydalanuvchini olish
+      const userRes = await getMe();
+      const userData = userRes?.data;
+
+      if (!userData) throw new Error("Foydalanuvchi ma'lumotlari olinmadi");
+
+      const user = {
+        id: res.data.id,
+        username: res.data.username,
+        token: res.data.token,
+        role: userData.role,
+      };
+
+      useUserStore.getState().setUser(user);
+
+      toast.success("Welcome, " + res.data.username + " 🎉");
+      router.push("/");
+    } catch (err: any) {
+      console.error("Login error", err);
+      toast.error(
+        "Login failed: " + (err?.response?.data?.message || err.message)
+      );
+    }
+  };
+
   return (
     <div className="h-screen bg-[var(--chatArea)] flex items-center justify-center px-4">
-      <form className="bg-white dark:bg-[var(--background)] rounded-xl shadow-lg p-8 w-full max-w-md text-[var(--foreground)] space-y-6 border border-[var(--border)]">
+      <form
+        onSubmit={(e) => handleLogin(e, username, password)}
+        className="bg-white dark:bg-[var(--popover)] rounded-xl shadow-lg p-8 w-full max-w-md text-[var(--foreground)] space-y-6 border border-[var(--border)]"
+      >
         <div className="flex flex-col items-center space-y-2">
           <Image
             src={fizmaSoftlogoDark}
@@ -28,13 +88,22 @@ const Login = () => {
 
         <div className="space-y-4">
           <div>
-            <Input type="text" placeholder="Username" />
+            <Input
+              type="text"
+              placeholder="Username"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              className="outline-none border-none"
+            />
           </div>
           <div className="relative">
             <Input
               type={showPassword ? "text" : "password"}
               placeholder="Password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
               className="pr-10"
+              // style={{ border: "1px solid red" }}
             />
             <button
               type="button"
@@ -50,9 +119,8 @@ const Login = () => {
         </div>
 
         <Button
-          variant="outline"
           type="submit"
-          className="w-full bg-[var(--primary)] hover:bg-opacity-90 text-white font-medium py-2 px-4 rounded-md transition cursor-pointer"
+          className="w-full bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-white font-medium py-2 px-4 rounded-md transition cursor-pointer"
         >
           Login
         </Button>

@@ -1,113 +1,96 @@
 "use client";
-import React from "react";
-import { Icon } from "@iconify/react/dist/iconify.js";
-import ChatHistory from "../chatList";
+import React, { useEffect, useState } from "react";
+import { motion } from "framer-motion";
 import { useChatStore } from "@/store/chatStore";
-import fizmaSoftLogo1 from "@/public/logo1.svg";
-import fizmaSoftLogo2 from "@/public/logo2.svg";
-import Image from "next/image";
-import { ThemeSwitch } from "../ui/ThemeSwitch";
-import { useTheme } from "next-themes";
+import { SidebarLogo } from "./sidebarLogo";
+import { SidebarToggleButton } from "./sidebarToggleButton";
+import { SidebarContent } from "./sidebarContent";
 
 export default function Sidebar() {
   const { isSidebarOpen, setIsSidebarOpen, addNewChat } = useChatStore();
+  const [isMobile, setIsMobile] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
 
-  const { theme, resolvedTheme } = useTheme();
+  useEffect(() => {
+    setIsMounted(true);
+    const checkWidth = () => setIsMobile(window.innerWidth < 640);
+    checkWidth();
+    window.addEventListener("resize", checkWidth);
+    return () => window.removeEventListener("resize", checkWidth);
+  }, []);
 
-  // Kichik sidebar
-  if (!isSidebarOpen) {
+  if (!isMounted) {
     return (
-      <aside className="hidden sm:flex flex-col justify-between h-full w-[72px] border-r border-border text-foreground transition-all duration-300 relative">
-        <div className="flex flex-col items-center pt-3 gap-3">
-          <div className="flex flex-col items-center gap-1">
-            <Image
-              src={resolvedTheme === "dark" ? fizmaSoftLogo1 : fizmaSoftLogo2}
-              alt="logo"
-              className="h-7 w-7"
-            />
-          </div>
-          <button
-            className="mt-2 p-1 rounded hover:bg-border"
-            onClick={() => setIsSidebarOpen(true)}
-            title="Sidebar ochish"
-          >
-            <Icon
-              icon={"solar:sidebar-minimalistic-linear"}
-              className="h-5 w-5 text-gray-400"
-            />
-          </button>
-          <button className="mt-2 p-1 rounded hover:bg-border">
-            <Icon
-              icon={"solar:pen-new-square-outline"}
-              className="h-5 w-5 text-gray-400"
-            />
-          </button>
-        </div>
-        <div className="flex flex-col items-center pb-4">
-          {/* ThemeSwitch ni joylashtiramiz */}
-          <ThemeSwitch />
-        </div>
+      <aside className="hidden md:flex flex-col bg-sidebar shadow-2xl h-full text-foreground relative overflow-hidden w-[72px]">
+        {/* Loading state */}
       </aside>
     );
   }
 
-  // Katta sidebar
-  return (
-    <div
-      className="fixed md:static inset-0 z-40 md:hidden"
-      style={{ display: isSidebarOpen ? "block" : "none" }}
-    >
-      <aside className=" flex flex-col h-full w-[260px] bg-sidebar  border-r border-border text-foreground transition-all duration-300 relative ">
-        <div className="flex items-center justify-between h-[56px] px-4 border-b border-border">
-          <div className="flex items-center gap-2">
-            <Image
-              src={resolvedTheme === "dark" ? fizmaSoftLogo1 : fizmaSoftLogo2}
-              alt="logo"
-              width={40}
-              className="h-7 w-7"
-            />
-          </div>
-          <button
-            className="p-1 rounded hover:bg-border"
-            onClick={() => setIsSidebarOpen(false)}
-            title="Sidebar yopish"
-          >
-            <Icon icon="lucide:panel-left" className="h-5 w-5 text-gray-400" />
-          </button>
-        </div>
-        <div className="px-4 py-3">
-          <button
-            onClick={() => {
-              addNewChat();
-            }}
-            className="w-full flex items-center justify-center gap-1 px-2 py-2 rounded-xl cursor-pointer text-sm font-medium border border-border transition bg-startNewChatBg text-startNewChatColor"
-          >
-            <span>
-              <Icon
-                icon="material-symbols:edit-square-outline-rounded"
-                className="text-sm"
-              />
-            </span>
-            <span className="text-sm">Start New chat</span>
-          </button>
-        </div>
-        {/* chat list  */}
-        <ChatHistory />
+  // Animation variants
+  const sidebarVariants = {
+    open: {
+      width: 280,
+      transition: { duration: 0.3 },
+    },
+    closed: {
+      width: 72,
+      transition: { duration: 0.3 },
+    },
+  };
 
-        {/* Footer */}
-        <div className="relative flex flex-col items-center pb-4">
-          <div className="w-full flex justify-between px-3 items-center">
-            <div>
-              {/* ThemeSwitch ni joylashtiramiz */}
-              <ThemeSwitch />
-            </div>
-            <div className="mt-2 text-xs text-gray-400">
-              Powered By{" "}
-              <span className="font-bold text-foreground">FizmaSoft</span>
-            </div>
-          </div>
-        </div>
-      </aside>
-    </div>
+  const mobileSidebarVariants = {
+    open: {
+      x: 0,
+      transition: { duration: 0.3 },
+    },
+    closed: {
+      x: "-100%",
+      transition: { duration: 0.3 },
+    },
+  };
+
+  const sidebarVariant = isMobile ? mobileSidebarVariants : sidebarVariants;
+
+  return (
+    <>
+      {/* Mobile Overlay */}
+      {isMobile && isSidebarOpen && (
+        <motion.div
+          className="fixed inset-0 bg-black bg-opacity-50 z-40"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          onClick={() => setIsSidebarOpen(false)}
+        />
+      )}
+
+      {/* Sidebar */}
+      <motion.aside
+        className="flex flex-col bg-sidebar shadow-2xl h-full text-foreground relative overflow-hidden sm:relative w-[280px] sm:w-auto z-50 sm:z-auto"
+        variants={sidebarVariant}
+        animate={isSidebarOpen ? "open" : "closed"}
+        initial={false}
+      >
+        {/* Header */}
+        <motion.div
+          className={`flex ${
+            isSidebarOpen
+              ? "items-center justify-between h-[56px] px-4"
+              : "flex-col items-center gap-2 py-4 h-[120px]"
+          } border-b border-border`}
+          layout
+        >
+          <SidebarLogo isSidebarOpen={isSidebarOpen} />
+          <SidebarToggleButton
+            isSidebarOpen={isSidebarOpen}
+            onToggle={() => setIsSidebarOpen(!isSidebarOpen)}
+          />
+        </motion.div>
+
+        {/* Main Content */}
+        <SidebarContent isSidebarOpen={isSidebarOpen} onNewChat={addNewChat} />
+      </motion.aside>
+    </>
   );
 }

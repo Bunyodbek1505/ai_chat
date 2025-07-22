@@ -3,6 +3,8 @@ import { create } from "zustand";
 interface ModelState {
   model: string;
   setModel: (model: string) => void;
+  content: string; 
+  setContent: (content: string) => void; 
   thinkEnabled: boolean;
   setThinkEnabled: (value: boolean) => void;
   hasUsedNoThink: boolean;
@@ -12,6 +14,9 @@ interface ModelState {
 export const useModelStore = create<ModelState>((set) => ({
   model: "",
   setModel: (model) => set({ model }),
+
+  content: "", 
+  setContent: (content) => set({ content }), 
 
   //
   thinkEnabled: false,

@@ -1,3 +1,5 @@
+// components/ui/ThemeSwitch.tsx
+
 "use client";
 
 import { Moon, Sun, Laptop } from "lucide-react";
@@ -11,7 +13,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 export const ThemeSwitch = () => {
-  const { setTheme, theme, systemTheme } = useTheme();
+  const { setTheme, theme } = useTheme();
 
   return (
     <DropdownMenu>

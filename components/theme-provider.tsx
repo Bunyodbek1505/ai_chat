@@ -10,9 +10,9 @@ export function ThemeProvider({
   // defaultTheme: system, attribute: class
   return (
     <NextThemesProvider
-      attribute="class"
-      defaultTheme="system"
-      enableSystem
+      // attribute="class"
+      // defaultTheme="dark"
+      // enableSystem
       {...props}
     >
       {children}

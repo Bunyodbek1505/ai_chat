@@ -7,6 +7,13 @@ const config = {
   content: ["./app/**/*.{js,ts,jsx,tsx}", "./components/**/*.{js,ts,jsx,tsx}"],
   theme: {
     extend: {
+      transitionProperty: {
+        all: "all",
+      },
+      scale: {
+        "95": "0.95",
+        "100": "1",
+      },
       // colors: {
       //   // ranglar dark va light uchun
       //   background: {
