@@ -1,10 +1,15 @@
 "use client";
-import React from "react";
+import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { NewChatButton } from "../newChatButton";
 import ChatHistory from "@/components/chatList";
 import { ThemeSwitch } from "@/components/ui/ThemeSwitch";
-
+import { useRouter } from "next/navigation";
+import { Icon } from "@iconify/react/dist/iconify.js";
+import { useUserStore } from "@/store/userStore";
+import { useLogout } from "@/hooks/useLogout";
+import SettingsModal from "../settingsModal";
+import SidebarProfile from "../sidebarProfile";
 
 interface SidebarContentProps {
   isSidebarOpen: boolean;
@@ -15,6 +20,17 @@ export function SidebarContent({
   isSidebarOpen,
   onNewChat,
 }: SidebarContentProps) {
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [showProfileMenu, setShowProfileMenu] = useState(false); // ✅ ADD THIS
+
+  const username = useUserStore((s) => s.user?.username);
+  const router = useRouter();
+
+  const handleNewChatClick = () => {
+    onNewChat();
+    router.push("/chat");
+  };
+
   const contentVariants = {
     open: {
       opacity: 1,
@@ -39,7 +55,6 @@ export function SidebarContent({
     <motion.div className="flex-1 overflow-hidden">
       <AnimatePresence mode="wait">
         {isSidebarOpen ? (
-          // Expanded Content
           <motion.div
             key="expanded"
             variants={contentVariants}
@@ -49,31 +64,20 @@ export function SidebarContent({
             className="h-full flex flex-col"
           >
             {/* New Chat Button */}
-            <NewChatButton onNewChat={onNewChat} isExpanded={true} />
+            <NewChatButton onNewChat={handleNewChatClick} isExpanded={true} />
 
             {/* Chat History */}
             <motion.div className="flex-1 overflow-y-auto">
               <ChatHistory />
             </motion.div>
 
-            {/* Footer */}
-            <motion.div className="px-4 py-3 border-t border-border">
-              <div className="flex items-center justify-between">
-                <ThemeSwitch />
-                <motion.div
-                  className="text-xs text-gray-400"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 0.3 }}
-                >
-                  Powered By{" "}
-                  <span className="font-bold text-foreground">FizmaSoft</span>
-                </motion.div>
-              </div>
+            {/* Expanded Footer */}
+            <motion.div className="px-4 py-2 border-t border-border bg-chat-input-bg m-4 rounded-xl">
+              <SidebarProfile onOpenSettings={() => setSettingsOpen(true)} />
             </motion.div>
           </motion.div>
         ) : (
-          // Collapsed Content
+          // Sidebar yopilgan holati
           <motion.div
             key="collapsed"
             variants={contentVariants}
@@ -87,13 +91,42 @@ export function SidebarContent({
               <NewChatButton onNewChat={onNewChat} isExpanded={false} />
             </motion.div>
 
-            {/* Theme Switch */}
-            <motion.div className="flex flex-col items-center">
-              <ThemeSwitch />
+            {/* Collapsed Footer */}
+            <motion.div className="flex flex-col items-center py-4 gap-3 relative">
+              {/* Avatar */}
+              <button
+                onClick={() => setShowProfileMenu(!showProfileMenu)}
+                className="w-7 h-7 rounded-full bg-purple-700 flex items-center justify-center text-white text-sm font-semibold cursor-pointer"
+              >
+                {username?.slice(0, 1)}
+              </button>
+
+              {/* Profile Menu Dropdown */}
+              <AnimatePresence>
+                {showProfileMenu && (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.95, y: -10 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.95, y: -10 }}
+                    transition={{ duration: 0.2 }}
+                    className="fixed left-18 bottom-[50px] z-10 w-[250px] px-4 py-3 bg-chat-input-bg rounded-xl border border-border shadow-lg"
+                  >
+                    <SidebarProfile
+                      onOpenSettings={() => setSettingsOpen(true)}
+                      onCloseMenu={() => setShowProfileMenu(false)}
+                    />
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
+
+      <SettingsModal
+        open={settingsOpen}
+        onClose={() => setSettingsOpen(false)}
+      />
     </motion.div>
   );
 }

@@ -17,6 +17,8 @@
   --color-accent: var(--accent);
   --color-secondary: var(--secondary);
   --color-chatArea: var(--chatArea);
+  --color-chat-input-bg: var(--chat-input-bg);
+  --color-button-bg: var(--button-bg);
 }
 
 /*  Light Theme */
@@ -34,8 +36,10 @@
   --destructive: oklch(0.6 0.25 30);
   --border: oklch(0.9 0.01 240);
   --input: oklch(0.95 0.01 240);
-  --sidebar: #f6f3ec ;
-  --chatArea: #f7f7f1;
+  --sidebar: #f0f5ff;
+  --chatArea: #fff;
+  --chat-input-bg: #cadfff;
+  --button-bg: #2a67c2;
 }
 
 /* Dark Theme */
@@ -51,9 +55,10 @@
   --destructive: oklch(0.7 0.2 30);
   --border: oklch(0.3 0.01 240 / 40%);
   --input: oklch(0.3 0.01 240 / 20%);
-  --sidebar: oklch(0.2 0.01 240);
-  /* --chatArea: oklch(0.15 0.01 240); */
-  --chatArea: oklch(0.17 0.01 240);
+  --sidebar: #151617;
+  --chatArea: #1d1e1f;
+  --chat-input-bg: #282c32;
+  --button-bg: #2a67c2;
 }
 
 @layer base {

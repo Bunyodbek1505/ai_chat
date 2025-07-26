@@ -9,23 +9,23 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useModelStore } from "@/store/modelStore";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Icon } from "@iconify/react/dist/iconify.js";
 import { useChatStore } from "@/store/chatStore";
 import { AIModel, getAIModels } from "@/service/chat";
-import SettingsModal from "./settingsModal";
-import ProfileMenu from "./profileMenu/ProfileMenu";
+import ChatSwitch from "./chatSwitch";
+import { useUserStore } from "@/store/userStore";
 
 const Header = () => {
   const [accountMenuOpen, setAccountMenuOpen] = useState(false);
   const accountMenuRef = useRef<HTMLDivElement>(null);
 
   const [models, setModels] = useState<AIModel[]>([]);
-  const [settingsOpen, setSettingsOpen] = useState(false);
 
   const model = useModelStore((s) => s.model);
   const setModel = useModelStore((s) => s.setModel);
-  const { setIsSidebarOpen } = useChatStore();
+  const { activeAdminView, setActiveAdminView, setIsSidebarOpen } =
+    useChatStore();
+  const role = useUserStore((s) => s.user?.role);
 
   useEffect(() => {
     function handleClick(e: MouseEvent) {
@@ -58,6 +58,7 @@ const Header = () => {
   return (
     <>
       <div className="w-full flex justify-between items-center p-3 bg-[var(--chatArea)] backdrop-blur-3xl border-none">
+        {/* mobile responsive icon */}
         <div className="block md:hidden">
           <button
             onClick={() => setIsSidebarOpen(true)}
@@ -70,12 +71,13 @@ const Header = () => {
             />
           </button>
         </div>
+
         <div>
           <Select value={model} onValueChange={setModel}>
-            <SelectTrigger className="w-[180px] border-none ">
+            <SelectTrigger className="w-[200px] border-none ">
               <SelectValue placeholder="Select AI Model" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="bg-white dark:bg-gray-700">
               <SelectGroup>
                 {model.length > 0 ? (
                   models.map((modelItem: any, index) => (
@@ -96,23 +98,16 @@ const Header = () => {
           </Select>
         </div>
 
-        <div className="relative hidden sm:block mr-2" ref={accountMenuRef}>
-          <button
-            onClick={() => {
-              setAccountMenuOpen((v) => !v);
-            }}
-            className="cursor-pointer"
-          >
-            <Avatar>
-              <AvatarImage src="https://github.com/shadcn.png" alt="@shadcn" />
-              <AvatarFallback>CN</AvatarFallback>
-            </Avatar>
-          </button>
+        {/* Admin Chat Switcher */}
+        {role === "admin" && (
+          <div>
+            <ChatSwitch
+              activeChat={activeAdminView}
+              setActiveChat={setActiveAdminView}
+            />
+          </div>
+        )}
 
-          {accountMenuOpen && (
-            <ProfileMenu onSettings={() => setSettingsOpen(true)} />
-          )}
-        </div>
         {/* mobile edit */}
         <div className="block sm:hidden">
           <span>
@@ -123,7 +118,6 @@ const Header = () => {
           </span>
         </div>
       </div>
-      {settingsOpen && <SettingsModal onClose={() => setSettingsOpen(false)} />}
     </>
   );
 };

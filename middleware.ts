@@ -1,19 +1,26 @@
 import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
-
-const protectedRoutes = ["/"];
+import { NextRequest } from "next/server";
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const token = request.cookies.get("token")?.value;
 
-  const isProtected = protectedRoutes.some((route) =>
-    pathname.startsWith(route)
-  );
+  // 1-holat: Foydalanuvchi tizimda (tokeni bor)
+  if (token) {
+    if (pathname === "/login") {
+      return NextResponse.redirect(new URL("/chat", request.url));
+    }
+    if (pathname === "/") {
+      return NextResponse.redirect(new URL("/chat", request.url));
+    }
+  }
 
-  if (isProtected && !token) {
-    const loginUrl = new URL("/login", request.url);
-    return NextResponse.redirect(loginUrl);
+  // 2-holat: Foydalanuvchi tizimda emas (tokeni yo'q)
+  if (!token) {
+    if (pathname === "/login") {
+      return NextResponse.next();
+    }
+    return NextResponse.redirect(new URL("/login", request.url));
   }
 
   return NextResponse.next();
@@ -22,4 +29,3 @@ export function middleware(request: NextRequest) {
 export const config = {
   matcher: ["/((?!login|_next|favicon.ico).*)"],
 };
-

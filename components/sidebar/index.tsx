@@ -7,9 +7,11 @@ import { SidebarToggleButton } from "./sidebarToggleButton";
 import { SidebarContent } from "./sidebarContent";
 
 export default function Sidebar() {
-  const { isSidebarOpen, setIsSidebarOpen, addNewChat } = useChatStore();
+  const { isSidebarOpen, setIsSidebarOpen, startNewChat } = useChatStore();
   const [isMobile, setIsMobile] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
+
+  
 
   useEffect(() => {
     setIsMounted(true);
@@ -26,6 +28,8 @@ export default function Sidebar() {
       </aside>
     );
   }
+
+  if (!isSidebarOpen) return null;
 
   // Animation variants
   const sidebarVariants = {
@@ -89,7 +93,10 @@ export default function Sidebar() {
         </motion.div>
 
         {/* Main Content */}
-        <SidebarContent isSidebarOpen={isSidebarOpen} onNewChat={addNewChat} />
+        <SidebarContent
+          isSidebarOpen={isSidebarOpen}
+          onNewChat={startNewChat}
+        />
       </motion.aside>
     </>
   );

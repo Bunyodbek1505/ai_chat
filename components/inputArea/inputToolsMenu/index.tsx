@@ -27,7 +27,7 @@ const InputToolsMenu = ({ onFolderSelected, onFilesSelected }: Props) => {
   };
 
   return (
-    <div className="absolute bottom-full mb-2 py-2 px-0.5 left-0 z-10 bg-sidebar rounded-md shadow-lg w-44 text-sm text-gray-800 dark:text-white">
+    <div className="absolute bottom-full mb-2 py-2 px-0.5 left-0 z-10 bg-chat-input-bg rounded-lg shadow-2xl w-44 text-sm text-gray-800 dark:text-white">
       {/* Folder Upload */}
       <button
         onClick={handleFolderClick}

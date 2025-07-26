@@ -1,108 +1,108 @@
-import { useChatStore } from "@/store/chatStore";
-import { AI_API_URL, API_KEY, API_URL } from "../../global";
-import { serviceApi } from "../serviceApi";
-import { useUserStore } from "@/store/userStore";
+import { API_URL } from "../../global";
+import Cookies from "js-cookie";
 
 export type ChatMessagePayload = {
   model: string;
   messages: {
     role: "system" | "user" | "assistant";
-    content: string;
+    content: any;
   }[];
   stream?: boolean;
+  chatId?: string;
 };
 
 export async function streamChatMessage(
   payload: ChatMessagePayload,
   onChunk: (text: string) => void,
   onStart?: (taskId: string) => void,
-  onComplete?: (meta: {
-    prompt_tokens: number;
-    completion_tokens: number;
-    total_tokens: number;
-    responseTime: number;
-  }) => void
-): Promise<void> {
-  const streamUrl = AI_API_URL + "/v1-openai/chat/completions";
-  const headers: Record<string, string> = {
-    "Content-Type": "application/json",
-    Authorization: `Bearer ${API_KEY}`,
-  };
+  onComplete?: (meta: any) => void
+): Promise<{ newChatId?: string }> {
+  const token = Cookies.get("token");
+  const chatId = payload.chatId;
 
-  
-  const startTime = performance.now();
+  try {
+    const startTime = performance.now();
+    const userInput = payload.messages[payload.messages.length - 1];
 
-  const streamRequest = await fetch(streamUrl, {
-    method: "POST",
-    headers,
-    body: JSON.stringify({
+    const body: any = {
       model: payload.model,
-      messages: payload.messages,
-      stream: true,
-    }),
-  });
+      content: userInput.content,
+    };
 
-  const userInput = payload.messages[payload.messages.length - 1];
-  const chatId = useChatStore.getState().activeChatId;
+    // MUHIM: Faqat mavjud chat bo'lsa chatId qo'shamiz
+    if (chatId) {
+      body.chatId = chatId;
+      console.log("Mavjud chatga xabar yuborilmoqda, chatId:", chatId);
+    } else {
+      console.log("Yangi chat yaratilmoqda, chatId yuborilmayapti");
+    }
 
-  const localRequest = serviceApi("POST", "/message/send", {
-    model: payload.model,
-    // role: role,
-    content: userInput.content,
-    chatId,
-  }).catch((err) => {
-    console.warn("Mahalliy API xatolik:", err);
-  });
+    const response = await fetch(`${API_URL}/message/send`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: token ? `Bearer ${token}` : "",
+      },
+      body: JSON.stringify(body),
+    });
 
-  const res = await Promise.all([streamRequest, localRequest]);
-  const streamRes = res[0];
+    if (!response.ok || !response.body) {
+      throw new Error(`Server xatosi: ${response.statusText}`);
+    }
 
-  if (!streamRes.ok || !streamRes.body) {
-    throw new Error("Stream API bilan muammo");
-  }
+    // Header'dan yangi chat ID'sini olamiz (faqat yangi chat yaratilganda mavjud bo'ladi)
+    const newChatId = response.headers.get("x-chat-id") || undefined;
 
-  const reader = streamRes.body.getReader();
-  const decoder = new TextDecoder("utf-8");
-  let buffer = "";
+    if (newChatId) {
+      console.log("Server'dan yangi chat ID olindu:", newChatId);
+    }
 
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    const chunk = decoder.decode(value, { stream: true });
-    buffer += chunk;
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder("utf-8");
+    let buffer = "";
 
-    const lines = buffer.split("\n");
-    buffer = lines.pop() || "";
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) break;
 
-    for (let line of lines) {
-      line = line.trim();
-      if (!line.startsWith("data:")) continue;
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split("\n");
+      buffer = lines.pop() || "";
 
-      const jsonStr = line.slice(5).trim();
-      if (jsonStr === "[DONE]") continue;
-
-      try {
-        const parsed = JSON.parse(jsonStr);
-        const content = parsed.choices?.[0]?.delta?.content;
-        if (content) {
-          onChunk(content);
+      for (const line of lines) {
+        if (line.startsWith("data: ")) {
+          const data = line.substring(6);
+          if (data === "[DONE]") {
+          } else {
+            try {
+              const parsed = JSON.parse(data);
+              const content = parsed.choices[0]?.delta?.content;
+              if (content) {
+                onChunk(content);
+              }
+              if (parsed.usage && onComplete) {
+                const endTime = performance.now();
+                onComplete({
+                  ...parsed.usage,
+                  responseTime: (endTime - startTime) / 1000,
+                });
+              }
+            } catch (e) {
+              console.error("JSON parse xatoligi:", data);
+            }
+          }
         }
-        // Meta ma’lumotlar yakuniy blokda bo‘ladi
-        const usage = parsed.usage;
-        if (usage && onComplete) {
-          const endTime = performance.now();
-          const responseTime = (endTime - startTime) / 1000;
-
-          onComplete({
-            prompt_tokens: usage.prompt_tokens,
-            completion_tokens: usage.completion_tokens,
-            total_tokens: usage.total_tokens,
-            responseTime,
-          });
-        }
-      } catch (err) {
-        console.warn("JSON parse xatoligi:", err);
       }
     }
+
+    return { newChatId };
+  } catch (error) {
+    console.error("Stream xatoligi:", error);
+    onChunk(
+      `\n\n**Xatolik yuz berdi:** ${
+        error instanceof Error ? error.message : "Noma'lum xato"
+      }`
+    );
+    throw error;
   }
 }

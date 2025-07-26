@@ -1,65 +1,54 @@
+
 "use client";
 
 import Sidebar from "@/components/sidebar";
 import Header from "@/components/header";
-import ChatArea from "@/components/chatArea";
 import { useChatStore } from "@/store/chatStore";
-import { motion, easeInOut } from "framer-motion";
+import { motion } from "framer-motion";
+import { useEffect } from "react";
 
-export default function ChatPage() {
-  const { isSidebarOpen } = useChatStore();
+export default function ChatLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const { isSidebarOpen, setIsSidebarOpen } = useChatStore();
+
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth >= 1024) {
+        setIsSidebarOpen(true);
+      } else {
+        setIsSidebarOpen(false);
+      }
+    };
+
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, [setIsSidebarOpen]);
 
   const contentVariants = {
-    expanded: {
-      marginLeft: 0,
-      transition: {
-        duration: 0.3,
-        ease: easeInOut,
-      },
-    },
-    collapsed: {
-      marginLeft: 0,
-      transition: {
-        duration: 0.3,
-        ease: easeInOut,
-      },
-    },
+    expanded: { marginLeft: 0 },
+    collapsed: { marginLeft: 0 },
   };
 
   const overlayVariants = {
     visible: {
       opacity: 1,
       pointerEvents: "auto",
-      transition: {
-        duration: 3,
-      },
+      transition: { duration: 0.3 },
     },
     hidden: {
       opacity: 0,
       pointerEvents: "none",
-      transition: {
-        duration: 3,
-      },
+      transition: { duration: 0.3 },
     },
   };
 
   return (
     <div className="flex h-screen overflow-hidden bg-background">
-      <div className="hidden md:block">
-        <Sidebar />
-      </div>
-
-      {/* Mobile Sidebar - fixed and overlays main content */}
-      {isSidebarOpen && (
-        <div className="sm:hidden fixed inset-0 z-40 flex">
-          <Sidebar />
-          {/* Black background */}
-          <div
-            className="flex-1 bg-black bg-opacity-50"
-            onClick={() => useChatStore.getState().setIsSidebarOpen(false)}
-          />
-        </div>
-      )}
+      <Sidebar />
 
       {/* Mobile Overlay */}
       <motion.div
@@ -87,15 +76,7 @@ export default function ChatPage() {
           <Header />
         </motion.div>
 
-        {/* Chat Area */}
-        <motion.div
-          className="h-full"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.3, delay: 0.2 }}
-        >
-          <ChatArea />
-        </motion.div>
+        {children}
       </motion.div>
     </div>
   );

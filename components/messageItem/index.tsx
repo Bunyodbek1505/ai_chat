@@ -24,26 +24,22 @@ export default function MessageItem({
   const { reasoning, cleanedAnswer, isReasoningFinished } = extractThinkContent(
     answer || ""
   );
-  const [showReasoning, setShowReasoning] = useState(!!reasoning);
+  const [showReasoning, setShowReasoning] = useState(!reasoning);
 
   return (
     <div className="flex flex-col gap-2">
       {/* Question */}
       <div className="flex justify-end">
         <div className="group flex gap-3 rounded-xl px-2 py-2 shadow-sm text-[var(--foreground)] font-medium text-base">
-          <div className="bg-[#E0E7FF] min-w-12 text-[#1f2937] text-center p-2 rounded-xl break-words">
+          <div className="bg-chat-input-bg min-w-13 text-white text-center px-4 py-2 rounded-tl-[18px] rounded-bl-[18px] rounded-br-[15px] rounded-tr-sm break-words">
             {question}
           </div>
-          <Image
-            src={avatarImage}
-            alt="avatar"
-            className="w-10 h-10 bg-[#A5BDDB] rounded-full"
-          />
+
         </div>
       </div>
 
       {/* Answer */}
-      <div className="flex justify-start">
+      <div className="flex justify-start overflow-hidden">
         <div className="relative group prose rounded-xl px-5 pt-0 shadow-sm text-[var(--foreground)] max-w-[100%]">
           {isLoading ? (
             <span className="italic text-gray-400">...</span>
