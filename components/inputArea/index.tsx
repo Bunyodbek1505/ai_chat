@@ -9,15 +9,6 @@ import InputToolsMenu from "./inputToolsMenu";
 import dynamic from "next/dynamic";
 import VoiceChat from "./voiceChat";
 
-// const DynamicVoiceChat = dynamic(
-//   () => import("@/components/inputArea/voiceChat"), // To'g'ri yo'lni ko'rsating
-//   {
-//     ssr: false,
-//     // (Ixtiyoriy) Komponent yuklanayotganda ko'rsatiladigan narsa
-//     loading: () => <p className="text-white">Ovozli chat yuklanmoqda...</p>,
-//   }
-// );
-
 type MessageContent =
   | {
       type: "text";
@@ -101,17 +92,11 @@ export default function InputArea({ onSend }: Props) {
     setUploadedFile([]);
   };
 
-  // Voice Chat uchun ovoz xabarini yuborish
+  // Voice Chat uchun callback (agar kerak bo'lsa)
   const handleSendVoiceMessage = (audioBlob: Blob) => {
-    const payload = {
-      content: [
-        {
-          type: "audio" as const,
-          audio: audioBlob,
-        },
-      ],
-    };
-    // onSend(payload);
+    // Voice Chat o'z ichida audio processing qiladi
+    // Bu yerda qo'shimcha ishlov berish kerak bo'lsa qo'shiladi
+    console.log("Voice message blob:", audioBlob);
     setVoiceChatOpen(false);
   };
 
@@ -154,7 +139,7 @@ export default function InputArea({ onSend }: Props) {
 
           <div className="flex justify-between items-center">
             {/* Tools menu */}
-            <div className="relative  px-2" ref={menuRef}>
+            <div className="relative px-2" ref={menuRef}>
               <button
                 className="p-1 border-2 border-gray-500 dark:border-gray-700 rounded-lg text-gray-500 dark:text-gray-400 cursor-pointer"
                 onClick={() => setMenuOpen((prev) => !prev)}
@@ -187,11 +172,12 @@ export default function InputArea({ onSend }: Props) {
                   />
                 </label>
               )}
+
               {/* Send button yoki Voice button */}
               {message.trim() || uploadedFile.length > 0 ? (
                 <button
                   onClick={handleSend}
-                  className="py-2 px-2 bg-button-bg text-white rounded-full cursor-pointer"
+                  className="py-2 px-2 bg-button-bg text-white rounded-full cursor-pointer hover:opacity-80 transition-opacity"
                 >
                   <Icon
                     icon="solar:arrow-up-outline"
@@ -201,7 +187,8 @@ export default function InputArea({ onSend }: Props) {
               ) : (
                 <button
                   onClick={handleOpenVoiceChat}
-                  className="py-2 px-2 bg-button-bg text-white rounded-full cursor-pointer"
+                  className="py-2 px-2 bg-button-bg text-white rounded-full cursor-pointer hover:opacity-80 transition-opacity"
+                  title="Voice Chat ochish"
                 >
                   <Icon
                     icon="solar:soundwave-outline"
@@ -218,7 +205,7 @@ export default function InputArea({ onSend }: Props) {
       <VoiceChat
         isOpen={voiceChatOpen}
         onClose={handleCloseVoiceChat}
-        // onSendVoiceMessage={handleSendVoiceMessage}
+        onSendVoiceMessage={handleSendVoiceMessage}
       />
     </>
   );

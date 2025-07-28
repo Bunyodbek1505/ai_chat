@@ -191,4 +191,4 @@ const ChatHistory = () => {
   );
 };
 
-export default React.memo(ChatHistory);
+export default ChatHistory;

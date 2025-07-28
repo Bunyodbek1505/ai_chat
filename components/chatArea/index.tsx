@@ -22,12 +22,15 @@ export interface Message {
 export default function ChatArea({ activeChatId }: { activeChatId?: string }) {
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const router = useRouter();
+  // const username = useUserStore((s) => s.user?.username);
 
   const {
     messages,
     setMessages,
     isStreaming,
     setStreaming,
+    addChatToList,
+    updateChatList,
     setChatList,
     setActiveChatId,
   } = useChatStore();
@@ -39,15 +42,19 @@ export default function ChatArea({ activeChatId }: { activeChatId?: string }) {
     const id = uuidv4();
 
     const newMessage = { id, question: "", answer: "", isLoading: true };
+
     let userMessage: any;
+    let userMessageContent: string;
 
     if (typeof payload === "string") {
       newMessage.question = payload;
+      userMessageContent = payload;
       userMessage = { role: "user", content: payload };
     } else {
       newMessage.question = payload.content
         .map((c: any) => (c.type === "text" ? c.text : "[Rasm]"))
         .join(" ");
+      userMessageContent = newMessage.question;
       userMessage = { role: "user", content: payload.content };
     }
 
@@ -107,6 +114,18 @@ export default function ChatArea({ activeChatId }: { activeChatId?: string }) {
 
         // Store'dagi activeChatId ni yangilaymiz
         setActiveChatId(newChatId);
+
+        // Yangi chatni darhol ro'yxatga qo'shamiz Butun ro'yxatni qayta yuklash o'rniga.
+        addChatToList({
+          id: newChatId,
+          // Sarlavha odatda birinchi xabardan olinadi
+          title:
+            userMessageContent.substring(0, 50) +
+            (userMessageContent.length > 50 ? "..." : ""),
+          // Bu ma'lumotlar backend'dan kelmasa ham, UI uchun vaqtinchalik qo'yib turamiz
+          user_id: "", // Agar user id kerak bo'lsa, uni userStore'dan oling
+          last_message_at: new Date().toISOString(),
+        });
 
         // Chat ro'yxatini yangilaymiz
         try {

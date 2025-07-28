@@ -5,7 +5,6 @@ import { Icon } from "@iconify/react/dist/iconify.js";
 import EditForm from "../editForm";
 import ChatMenu from "../chatMenu";
 
-
 interface Chat {
   id: string;
   title: string;
@@ -48,13 +47,16 @@ const ChatItem: React.FC<ChatItemProps> = React.memo(
 
     const handleMenuToggle = useCallback(
       (e: React.MouseEvent) => {
-        if (menuButtonRef.current) {
-          const rect = menuButtonRef.current.getBoundingClientRect();
-          setMenuPosition({
-            top: rect.bottom + 5,
-            right: window.innerWidth - rect.right,
-          });
-        }
+        e.stopPropagation();
+        setTimeout(() => {
+          if (menuButtonRef.current) {
+            const rect = menuButtonRef.current.getBoundingClientRect();
+            setMenuPosition({
+              top: rect.bottom + 5,
+              right: window.innerWidth - rect.right,
+            });
+          }
+        }, 0);
         onMenuToggle(e, chat.id);
       },
       [onMenuToggle, chat.id]
@@ -77,9 +79,7 @@ const ChatItem: React.FC<ChatItemProps> = React.memo(
         onClick={() => onChatClick(chat.id)}
         className={`group relative flex items-center justify-between bg-popover rounded-lg p-2 transition-all duration-200
         ${
-          isActive && !isEditing
-            ? "bg-chat-input-bg"
-            : "hover:bg-chat-input-bg"
+          isActive && !isEditing ? "bg-chat-input-bg" : "hover:bg-chat-input-bg"
         }
         ${isEditing ? "bg-chat-input-bg cursor-default" : "cursor-pointer"}
         ${isSubmitting ? "opacity-50 pointer-events-none" : ""}

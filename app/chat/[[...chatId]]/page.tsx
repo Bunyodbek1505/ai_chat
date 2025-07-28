@@ -1,7 +1,7 @@
 "use client";
 
 import ChatArea from "@/components/chatArea";
-import ChatAreaTwo from "@/components/ChatAreaTwo"; // ✅ ChatAreaTwo ni import qilish
+import ChatAreaTwo from "@/components/ChatAreaTwo"; 
 import { useChatStore } from "@/store/chatStore";
 import { v4 as uuidv4 } from "uuid";
 import { useParams } from "next/navigation";

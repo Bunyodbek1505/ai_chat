@@ -432,7 +432,7 @@ export default function VoiceChat({ isOpen, onClose }: VoiceChatProps) {
                   fullResponse += content;
                   setAiResponse(fullResponse);
                 }
-              } catch (e: any) {
+              } catch (e) {
                 console.warn(
                   "JSON parse warning (yarim chunk bo'lishi mumkin):",
                   e.message
@@ -457,7 +457,7 @@ export default function VoiceChat({ isOpen, onClose }: VoiceChatProps) {
               fullResponse += content;
               setAiResponse(fullResponse);
             }
-          } catch (e: any) {
+          } catch (e) {
             console.warn("Final buffer parse warning:", e.message);
           }
         }

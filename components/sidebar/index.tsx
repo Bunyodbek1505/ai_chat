@@ -11,8 +11,6 @@ export default function Sidebar() {
   const [isMobile, setIsMobile] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
 
-  
-
   useEffect(() => {
     setIsMounted(true);
     const checkWidth = () => setIsMobile(window.innerWidth < 640);
@@ -29,7 +27,7 @@ export default function Sidebar() {
     );
   }
 
-  if (!isSidebarOpen) return null;
+  // if (!isSidebarOpen) return null;
 
   // Animation variants
   const sidebarVariants = {
